@@ -63,7 +63,7 @@ NexusComm  ClearCast          EduSphere
    - Storage: 20 GB
 3. Attach the ISO and install Ubuntu Server with default settings
 4. Set your username to `benja` (or update all scripts with your username)
-
+5. The password is `123`
 ### Step 2 — Configure VirtualBox Port Forwarding
 
 Go to **Settings → Network → Adapter 1 → Advanced → Port Forwarding** and add:
