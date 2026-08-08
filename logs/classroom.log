@@ -1,0 +1,15 @@
+MeshLearn — starting on http://127.0.0.1:5005
+ * Serving Flask app 'classroom'
+ * Debug mode: on
+[31m[1mWARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.[0m
+ * Running on all addresses (0.0.0.0)
+ * Running on http://127.0.0.1:5005
+ * Running on http://10.0.2.15:5005
+[33mPress CTRL+C to quit[0m
+ * Restarting with stat
+ * Debugger is active!
+ * Debugger PIN: 703-644-663
+10.0.2.2 - - [28/Jun/2026 17:50:24] "[32mGET / HTTP/1.1[0m" 302 -
+10.0.2.2 - - [28/Jun/2026 17:50:24] "GET /login HTTP/1.1" 200 -
+10.0.2.2 - - [28/Jun/2026 17:51:17] "[32mPOST /login HTTP/1.1[0m" 302 -
+10.0.2.2 - - [28/Jun/2026 17:51:17] "GET / HTTP/1.1" 200 -

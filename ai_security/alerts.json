@@ -1,0 +1,53 @@
+[
+  {
+    "id": 3,
+    "domain": "takotejo52.ch",
+    "node": "dc",
+    "employees": [
+      "jim"
+    ],
+    "request_count": 1,
+    "first_requested": "2026-06-15 11:35:36",
+    "last_requested": "2026-06-15 11:35:36",
+    "risk_signals": [],
+    "ml_risk_score": 0.734,
+    "ml_label": "suspicious",
+    "ml_severity": "danger",
+    "status": "pending"
+  },
+  {
+    "id": 2,
+    "domain": "porn.com",
+    "node": "dc",
+    "employees": [
+      "jim"
+    ],
+    "request_count": 1,
+    "first_requested": "2026-06-15 11:35:23",
+    "last_requested": "2026-06-15 11:35:23",
+    "risk_signals": [],
+    "ml_risk_score": 0.058,
+    "ml_label": "benign",
+    "ml_severity": "info",
+    "status": "denied"
+  },
+  {
+    "id": 1,
+    "domain": "piratebay.com",
+    "node": "dc",
+    "employees": [
+      "jim"
+    ],
+    "request_count": 1,
+    "first_requested": "2026-06-15 11:34:55",
+    "last_requested": "2026-06-15 11:34:55",
+    "risk_signals": [
+      "file_sharing",
+      "shopping"
+    ],
+    "ml_risk_score": 0.044,
+    "ml_label": "benign",
+    "ml_severity": "info",
+    "status": "denied"
+  }
+]

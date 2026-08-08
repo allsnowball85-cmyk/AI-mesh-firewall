@@ -1,0 +1,8 @@
+{
+  "email_enabled": false,
+  "smtp_server": "smtp.gmail.com",
+  "smtp_port": 587,
+  "smtp_username": "your-email@gmail.com",
+  "smtp_app_password": "your-16-char-app-password",
+  "admin_email": "admin-recipient@example.com"
+}

@@ -1,0 +1,6 @@
+[2026-06-15 11:34:55] BLOCKED: piratebay.com (node=dc, employees=['jim'], count=1)
+[2026-06-15 11:34:55] Email notification: Email notifications disabled (configure config.json to enable)
+[2026-06-15 11:35:23] BLOCKED: porn.com (node=dc, employees=['jim'], count=1)
+[2026-06-15 11:35:23] Email notification: Email notifications disabled (configure config.json to enable)
+[2026-06-15 11:35:36] BLOCKED: takotejo52.ch (node=dc, employees=['jim'], count=1)
+[2026-06-15 11:35:36] Email notification: Email notifications disabled (configure config.json to enable)

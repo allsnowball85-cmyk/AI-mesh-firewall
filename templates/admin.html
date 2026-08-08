@@ -1,0 +1,665 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>NodeNet ISP — Network Operations Center</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { background: #0a0c0f; color: #c4cdd8; font-family: 'Segoe UI', sans-serif; min-height: 100vh; }
+
+header {
+  background: #0d1420; border-bottom: 1px solid #1e2a3a;
+  padding: 14px 28px; display: flex; justify-content: space-between; align-items: center;
+}
+header h1 { color: #e2e8f0; font-size: 17px; display: flex; align-items: center; gap: 10px; }
+.badge { font-size: 10px; padding: 2px 9px; border-radius: 20px; letter-spacing: 1px;
+         background: #1a3a1a; color: #4ade80; border: 1px solid #2a5a2a; }
+#clock { font-family: monospace; font-size: 12px; color: #475569; }
+
+.container { max-width: 1120px; margin: 0 auto; padding: 28px 20px; }
+
+/* MESH MASTER TOGGLE */
+.mesh-bar {
+  display: flex; align-items: center; justify-content: space-between;
+  background: #0e1219; border: 1px solid #1e2a3a; border-radius: 10px;
+  padding: 16px 22px; margin-bottom: 24px;
+}
+.mesh-bar.running { border-color: #1a3a1a; background: #0b160b; }
+.mesh-bar.stopped { border-color: #3a1a1a; background: #160b0b; }
+.mesh-label { font-size: 14px; font-weight: 600; }
+.mesh-bar.running .mesh-label { color: #4ade80; }
+.mesh-bar.stopped .mesh-label { color: #f87171; }
+.mesh-sub { font-size: 12px; color: #475569; margin-top: 3px; font-family: monospace; }
+.big-btn {
+  padding: 10px 28px; border-radius: 8px; font-size: 13px; font-weight: 600;
+  border: 1px solid; cursor: pointer; transition: all 0.2s; letter-spacing: 0.5px;
+}
+.big-btn.start { background: #0b2b0b; color: #4ade80; border-color: #4ade80; }
+.big-btn.start:hover { background: #4ade80; color: #0a0c0f; }
+.big-btn.stop  { background: #2b0b0b; color: #f87171; border-color: #f87171; }
+.big-btn.stop:hover  { background: #f87171; color: #0a0c0f; }
+.big-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+/* SECTION */
+.section-title {
+  font-size: 10px; letter-spacing: 3px; text-transform: uppercase;
+  color: #475569; margin-bottom: 12px; font-family: monospace;
+}
+
+/* NODE GRID */
+.nodes { display: grid; grid-template-columns: repeat(3,1fr); gap: 14px; margin-bottom: 24px; }
+.node-card {
+  background: #0e1219; border: 1px solid #1e2a3a; border-radius: 10px;
+  padding: 16px; transition: border-color 0.3s, opacity 0.3s;
+}
+.node-card.online  { border-color: #1a3a1a; }
+.node-card.offline { border-color: #2a1a1a; opacity: 0.75; }
+
+.node-top { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 12px; }
+.node-name { font-size: 13px; font-weight: 600; color: #f1f5f9; display: flex; align-items: center; gap: 7px; }
+.dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+.online .dot  { background: #4ade80; box-shadow: 0 0 6px #4ade80; }
+.offline .dot { background: #f87171; }
+.node-ip { font-family: monospace; font-size: 11px; color: #475569; margin-top: 2px; }
+
+/* POWER BUTTON */
+.power-btn {
+  width: 32px; height: 32px; border-radius: 50%; border: 1.5px solid;
+  background: transparent; cursor: pointer; font-size: 14px;
+  display: flex; align-items: center; justify-content: center; transition: all 0.2s;
+}
+.online  .power-btn { border-color: #4ade80; color: #4ade80; }
+.offline .power-btn { border-color: #f87171; color: #f87171; }
+.online  .power-btn:hover { background: #4ade80; color: #0a0c0f; }
+.offline .power-btn:hover { background: #f87171; color: #0a0c0f; }
+.power-btn:disabled { opacity: 0.3; cursor: not-allowed; }
+
+.node-stat { display: flex; justify-content: space-between; font-size: 11px; margin-bottom: 4px; color: #475569; }
+.node-stat .val { font-family: monospace; color: #94a3b8; }
+.online .node-stat .val.status-val { color: #4ade80; }
+.offline .node-stat .val.status-val { color: #f87171; }
+
+/* TOGGLE ROWS */
+.toggles { margin-top: 12px; padding-top: 10px; border-top: 1px solid #1e2a3a; display: flex; flex-direction: column; gap: 7px; }
+.toggle-row { display: flex; justify-content: space-between; align-items: center; }
+.toggle-label { font-size: 11px; color: #475569; }
+
+/* TOGGLE SWITCH */
+.switch { position: relative; width: 38px; height: 20px; }
+.switch input { opacity: 0; width: 0; height: 0; }
+.slider {
+  position: absolute; inset: 0; border-radius: 20px;
+  background: #1e2a3a; cursor: pointer; transition: 0.2s;
+}
+.slider:before {
+  content: ''; position: absolute; width: 14px; height: 14px;
+  border-radius: 50%; background: #475569; top: 3px; left: 3px; transition: 0.2s;
+}
+input:checked + .slider { background: #1a3a5f; }
+input:checked + .slider:before { transform: translateX(18px); background: #38bdf8; }
+input.green:checked + .slider { background: #1a3a1a; }
+input.green:checked + .slider:before { background: #4ade80; }
+input:disabled + .slider { opacity: 0.35; cursor: not-allowed; }
+
+/* PANELS */
+.panel { background: #0e1219; border: 1px solid #1e2a3a; border-radius: 10px; padding: 18px; margin-bottom: 20px; }
+.grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+.input-row { display: flex; gap: 8px; margin-bottom: 12px; flex-wrap: wrap; }
+input[type=text], select {
+  background: #141924; border: 1px solid #1e2a3a; color: #c4cdd8;
+  padding: 7px 11px; border-radius: 6px; font-size: 12px; outline: none; flex: 1; min-width: 130px;
+}
+input[type=text]:focus, select:focus { border-color: #38bdf8; }
+.btn {
+  padding: 7px 16px; border-radius: 6px; cursor: pointer; font-size: 12px;
+  border: 1px solid; transition: all 0.2s;
+}
+.btn.primary { background: #0a2040; color: #38bdf8; border-color: #38bdf8; }
+.btn.primary:hover { background: #38bdf8; color: #0a0c0f; }
+.btn.danger  { background: #3a1a1a; color: #f87171; border-color: #f87171; }
+.btn.danger:hover  { background: #f87171; color: #0a0c0f; }
+.alert-card {
+  display: flex; justify-content: space-between; align-items: flex-start;
+  background: #141924; border: 1px solid #1e2a3a; border-radius: 8px;
+  padding: 12px 14px; gap: 12px;
+}
+.alert-card.resolved { opacity: 0.5; }
+.alert-domain { font-size: 13px; font-weight: 600; color: #f1f5f9; font-family: monospace; }
+.alert-meta { font-size: 11px; color: #475569; margin-top: 4px; line-height: 1.6; }
+.alert-risk { display: inline-block; background: #3a1a1a; color: #f87171; font-size: 10px;
+  padding: 1px 7px; border-radius: 10px; margin-right: 4px; }
+.alert-actions { display: flex; gap: 6px; flex-shrink: 0; }
+.btn-sm { padding: 4px 12px; border-radius: 5px; cursor: pointer; font-size: 11px; border: 1px solid; }
+.btn-approve { background: #0b2b0b; color: #4ade80; border-color: #4ade80; }
+.btn-approve:hover { background: #4ade80; color: #0a0c0f; }
+.btn-deny { background: #2b0b0b; color: #f87171; border-color: #f87171; }
+.btn-deny:hover { background: #f87171; color: #0a0c0f; }
+.status-tag { font-size: 10px; padding: 2px 8px; border-radius: 10px; font-family: monospace; }
+.status-pending  { background: #2b240b; color: #fbbf24; }
+.status-approved { background: #0b2b0b; color: #4ade80; }
+.status-denied   { background: #2b0b0b; color: #f87171; }
+.ml-score { display: inline-flex; align-items: center; gap: 6px; font-size: 10px;
+  font-family: monospace; padding: 2px 8px; border-radius: 10px; }
+.ml-info   { background: rgba(56,189,248,.1); color: #38bdf8; }
+.ml-warn   { background: rgba(251,191,36,.1); color: #fbbf24; }
+.ml-danger { background: rgba(248,113,113,.1); color: #f87171; }
+.alert-card.ml-danger-card { border-left: 3px solid #f87171; }
+.alert-card.ml-warn-card { border-left: 3px solid #fbbf24; }
+pre {
+  background: #070910; border: 1px solid #1e2a3a; border-radius: 6px;
+  padding: 12px; font-size: 11px; font-family: monospace; color: #94a3b8;
+  white-space: pre-wrap; max-height: 220px; overflow-y: auto;
+}
+.tabs { display: flex; gap: 7px; margin-bottom: 12px; }
+.tab {
+  padding: 4px 13px; border-radius: 6px; font-size: 11px; cursor: pointer;
+  border: 1px solid #1e2a3a; background: #141924; color: #475569;
+}
+.tab.active { background: #1e3a5f; color: #38bdf8; border-color: #38bdf8; }
+
+/* TOAST */
+#toast {
+  position: fixed; bottom: 20px; right: 20px;
+  background: #0e1219; border: 1px solid #1e2a3a; border-radius: 8px;
+  padding: 11px 18px; font-size: 12px; font-family: monospace;
+  opacity: 0; transition: opacity 0.3s; pointer-events: none; z-index: 200; max-width: 300px;
+}
+#toast.show { opacity: 1; }
+#toast.ok  { border-color: #4ade80; color: #4ade80; }
+#toast.err { border-color: #f87171; color: #f87171; }
+#toast.info { border-color: #38bdf8; color: #38bdf8; }
+
+@media(max-width:700px){
+  .nodes { grid-template-columns: 1fr; }
+  .grid2 { grid-template-columns: 1fr; }
+}
+.svc-badge{display:inline-flex;align-items:center;gap:5px;font-size:10px;padding:2px 8px;
+           border-radius:10px;font-family:monospace;margin-top:4px;}
+.svc-on{background:rgba(74,222,128,.1);color:#4ade80;border:1px solid rgba(74,222,128,.25);}
+.svc-off{background:rgba(248,113,113,.1);color:#f87171;border:1px solid rgba(248,113,113,.25);}
+.btn-svc{font-size:10px;padding:3px 10px;border-radius:5px;cursor:pointer;margin-top:4px;
+         border:1px solid;transition:all .15s;display:inline-block;background:none;}
+.btn-svc-start{color:#4ade80;border-color:rgba(74,222,128,.4);}
+.btn-svc-start:hover{background:#4ade80;color:#0a0c0f;}
+.btn-svc-stop{color:#f87171;border-color:rgba(248,113,113,.4);}
+.btn-svc-stop:hover{background:#f87171;color:#0a0c0f;}
+</style>
+</head>
+<body>
+
+<header>
+  <h1>NodeNet ISP <span class="badge">NOC</span></h1>
+  <span id="clock">{{ now }}</span>
+</header>
+
+<div class="container">
+
+  <!-- MESH MASTER CONTROL -->
+  <div class="mesh-bar {{ 'running' if mesh_running else 'stopped' }}" id="mesh-bar">
+    <div>
+      <div class="mesh-label" id="mesh-label">
+        Mesh Network — {{ 'Running' if mesh_running else 'Stopped' }}
+      </div>
+      <div class="mesh-sub" id="mesh-sub">
+        {{ '3 nodes active · batman-adv routing live' if mesh_running else 'All nodes offline · click Start to bring up the mesh' }}
+      </div>
+    </div>
+    {% if mesh_running %}
+    <button class="big-btn stop" id="mesh-btn" onclick="toggleMesh('stop')">⏹ Stop Mesh</button>
+    {% else %}
+    <button class="big-btn start" id="mesh-btn" onclick="toggleMesh('start')">▶ Start Mesh</button>
+    {% endif %}
+  </div>
+
+  <!-- NODE CARDS -->
+  <div class="section-title">Data Center Nodes</div>
+  <div class="nodes">
+    {% for node in nodes %}
+    <div class="node-card {{ 'online' if node.online else 'offline' }}" id="card-{{ node.key }}">
+      <div class="node-top">
+        <div>
+          <div class="node-name"><span class="dot"></span>{{ node.name }}</div>
+          <div class="node-ip">{{ node.ip }}</div>
+        </div>
+        <button class="power-btn" onclick="togglePower('{{ node.key }}', this)"
+                title="{{ 'Power off' if node.online else 'Power on' }}">⏻</button>
+      </div>
+      <div class="node-stat"><span>Status</span><span class="val status-val">{{ 'Online' if node.online else 'Offline' }}</span></div>
+      <div class="node-stat"><span>Neighbors</span><span class="val">{{ node.neighbors }}</span></div>
+
+      <!-- HOSTED SERVICE -->
+      <div style="margin-top:10px;padding-top:10px;border-top:1px solid #1e2a3a;">
+        <div style="font-size:10px;color:#475569;letter-spacing:1px;text-transform:uppercase;margin-bottom:6px;">Hosted Service</div>
+        <div style="font-size:12px;color:#e2e8f0;font-weight:600;margin-bottom:4px;">{{ node.service_name }}</div>
+        {% if node.service_running %}
+        <span class="svc-badge svc-on" id="svc-badge-{{ node.key }}">🟢 Running · :{{ node.service_port }}</span><br>
+        <a href="{{ node.service_url }}" target="_blank" style="font-size:10px;color:#38bdf8;font-family:monospace;">Open ↗</a>
+        <button class="btn-svc btn-svc-stop" style="margin-left:6px;" onclick="svcStop('{{ node.key }}')">⏹ Stop</button>
+        {% else %}
+        <span class="svc-badge svc-off" id="svc-badge-{{ node.key }}">🔴 Offline · :{{ node.service_port }}</span><br>
+        <button class="btn-svc btn-svc-start" onclick="svcStart('{{ node.key }}')">▶ Start Service</button>
+        {% endif %}
+      </div>
+
+      <!-- TOGGLES -->
+      <div class="toggles">
+        <div class="toggle-row">
+          <span class="toggle-label">🔥 Firewall</span>
+          <label class="switch">
+            <input type="checkbox" class="green" id="fw-{{ node.key }}"
+                   {{ 'checked' if node.firewall else '' }}
+                   {{ 'disabled' if not node.online else '' }}
+                   onchange="toggleFirewall('{{ node.key }}', this)">
+            <span class="slider"></span>
+          </label>
+        </div>
+        <div class="toggle-row">
+          <span class="toggle-label">🌍 Geo-blocking</span>
+          <label class="switch">
+            <input type="checkbox" class="green" id="geo-{{ node.key }}"
+                   {{ 'checked' if node.geo else '' }}
+                   {{ 'disabled' if not node.online else '' }}
+                   onchange="toggleGeo('{{ node.key }}', this)">
+            <span class="slider"></span>
+          </label>
+        </div>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+
+  <!-- TOOLS -->
+  <div class="grid2">
+    <div class="panel">
+      <div class="section-title">Block IP Address</div>
+      <div class="input-row">
+        <input type="text" id="block-ip" placeholder="e.g. 1.2.3.4">
+        <select id="block-node">
+          <option value="all">All Nodes</option>
+          <option value="dc">DC</option>
+          <option value="seattle">Seattle</option>
+          <option value="sf">SF</option>
+        </select>
+        <button class="btn danger" onclick="blockIP()">Block</button>
+      </div>
+      <pre id="block-output">Result will appear here...</pre>
+    </div>
+
+    <div class="panel">
+      <div class="section-title">Ping Test</div>
+      <div class="input-row">
+        <select id="ping-from">
+          <option value="dc">From DC</option>
+          <option value="seattle">From Seattle</option>
+          <option value="sf">From SF</option>
+        </select>
+        <input type="text" id="ping-target" placeholder="Target IP e.g. 10.0.0.2">
+        <button class="btn primary" onclick="pingNode()">Ping</button>
+      </div>
+      <pre id="ping-output">Result will appear here...</pre>
+    </div>
+  </div>
+
+  <div class="panel">
+    <div class="section-title">Firewall Rules</div>
+    <div class="tabs">
+      <div class="tab active" onclick="loadRules('dc', this)">DC</div>
+      <div class="tab" onclick="loadRules('seattle', this)">Seattle</div>
+      <div class="tab" onclick="loadRules('sf', this)">SF</div>
+    </div>
+    <pre id="rules-output">Click a node tab to load its firewall rules...</pre>
+  </div>
+
+  <!-- AI SECURITY -- ZERO TRUST POLICY ENGINE -->
+  <div class="panel">
+    <div class="section-title">🛡️ AI Security — Zero-Trust Policy Engine</div>
+    <p style="font-size:12px;color:#64748b;margin-bottom:14px;line-height:1.6;">
+      NodeNet ISP Zero-Trust Policy Engine. Only domains in approved business categories
+      (banking, OS updates, core infra, approved tools) are allowed. Everything
+      else is blocked and escalated below for admin review. A Random Forest
+      model (trained on domain-name character patterns, 94% test accuracy)
+      scores how suspicious each blocked domain <em>looks</em> -- e.g.
+      DGA / phishing-style names -- so high-risk alerts surface first.
+    </p>
+
+    <!-- Base ruleset controls -->
+    <div class="input-row" style="margin-bottom:18px;">
+      <select id="rs-node">
+        <option value="all">All Nodes</option>
+        <option value="dc">DC</option>
+        <option value="seattle">Seattle</option>
+        <option value="sf">SF</option>
+      </select>
+      <button class="btn primary" onclick="previewRuleset()">👁 Preview Base Ruleset</button>
+      <button class="btn danger" onclick="applyRuleset()">⚙ Generate &amp; Apply Zero-Trust Ruleset</button>
+    </div>
+    <pre id="ruleset-output" style="display:none;"></pre>
+
+    <!-- Request simulator -->
+    <div class="section-title" style="margin-top:18px;">Simulate Employee Request</div>
+    <div class="input-row">
+      <input type="text" id="sim-domain" placeholder="e.g. facebook.com or slack.com">
+      <select id="sim-node">
+        <option value="dc">DC</option>
+        <option value="seattle">Seattle</option>
+        <option value="sf">SF</option>
+      </select>
+      <input type="text" id="sim-employee" placeholder="Employee (e.g. jdoe)" style="max-width:160px;">
+      <button class="btn primary" onclick="simulateRequest()">▶ Send Request</button>
+    </div>
+    <pre id="sim-output">Result will appear here...</pre>
+
+    <!-- Pending alerts -->
+    <div class="section-title" style="margin-top:18px;">Pending Alerts <span id="alert-count" class="badge" style="margin-left:6px;"></span></div>
+    <div id="alerts-list" style="display:flex;flex-direction:column;gap:8px;"></div>
+
+    <!-- Allowlist viewer -->
+    <div class="section-title" style="margin-top:18px;">Current Allowlist (Trusted Categories)</div>
+    <pre id="allowlist-output">Loading...</pre>
+  </div>
+
+</div>
+
+
+<div id="toast"></div>
+
+<script>
+function toast(msg, type='ok') {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.className = 'show ' + type;
+  clearTimeout(t._timer);
+  t._timer = setTimeout(() => t.className = '', 3000);
+}
+
+// ── MESH ──
+async function toggleMesh(action) {
+  const btn = document.getElementById('mesh-btn');
+  const bar = document.getElementById('mesh-bar');
+  btn.disabled = true;
+  btn.textContent = action === 'start' ? '⏳ Starting...' : '⏳ Stopping...';
+  toast(action === 'start' ? 'Starting mesh network...' : 'Stopping mesh network...', 'info');
+  try {
+    const res = await fetch(`/api/mesh/${action}`, { method: 'POST' });
+    const data = await res.json();
+    toast(data.result, 'ok');
+    setTimeout(() => location.reload(), 1500);
+  } catch(e) {
+    toast('Error: ' + e, 'err');
+    btn.disabled = false;
+  }
+}
+
+// ── NODE POWER ──
+async function togglePower(key, btn) {
+  const card = document.getElementById('card-' + key);
+  const isOnline = card.classList.contains('online');
+  btn.disabled = true; btn.textContent = '…';
+  try {
+    const res = await fetch(`/api/power/${key}`, {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({action: isOnline ? 'off' : 'on'})
+    });
+    const data = await res.json();
+    const online = data.online;
+    card.classList.toggle('online', online);
+    card.classList.toggle('offline', !online);
+    card.querySelector('.status-val').textContent = online ? 'Online' : 'Offline';
+    // enable/disable toggles
+    card.querySelectorAll('input[type=checkbox]').forEach(el => el.disabled = !online);
+    btn.title = online ? 'Power off' : 'Power on';
+    toast(data.result, online ? 'ok' : 'err');
+  } catch(e) { toast('Error: ' + e, 'err'); }
+  btn.disabled = false; btn.textContent = '⏻';
+}
+
+// ── FIREWALL ──
+async function toggleFirewall(key, el) {
+  const action = el.checked ? 'on' : 'off';
+  try {
+    const res = await fetch(`/api/firewall/${key}`, {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({action})
+    });
+    const data = await res.json();
+    toast(data.result, 'ok');
+  } catch(e) { toast('Error: ' + e, 'err'); el.checked = !el.checked; }
+}
+
+// ── GEO-BLOCK ──
+async function toggleGeo(key, el) {
+  const action = el.checked ? 'on' : 'off';
+  try {
+    const res = await fetch(`/api/geoblock/${key}`, {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({action})
+    });
+    const data = await res.json();
+    toast(data.result, 'ok');
+  } catch(e) { toast('Error: ' + e, 'err'); el.checked = !el.checked; }
+}
+
+// ── BLOCK IP ──
+async function blockIP() {
+  const ip = document.getElementById('block-ip').value.trim();
+  const node = document.getElementById('block-node').value;
+  if (!ip) return;
+  document.getElementById('block-output').textContent = 'Blocking ' + ip + '...';
+  const res = await fetch('/api/block', {
+    method: 'POST', headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({ip, node})
+  });
+  const data = await res.json();
+  document.getElementById('block-output').textContent = data.result.join('\n');
+  toast('Blocked: ' + ip, 'ok');
+}
+
+// ── PING ──
+async function pingNode() {
+  const from = document.getElementById('ping-from').value;
+  const target = document.getElementById('ping-target').value.trim();
+  if (!target) return;
+  document.getElementById('ping-output').textContent = 'Pinging ' + target + '...';
+  const res = await fetch(`/api/ping/${from}/${target}`);
+  const data = await res.json();
+  document.getElementById('ping-output').textContent = data.output;
+}
+
+// ── RULES ──
+async function loadRules(node, el) {
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  el.classList.add('active');
+  document.getElementById('rules-output').textContent = 'Loading...';
+  const res = await fetch(`/api/rules/${node}`);
+  const data = await res.json();
+  document.getElementById('rules-output').textContent = data.rules || 'No rules found.';
+}
+
+// ── SERVICE CONTROL ──
+async function svcStart(key) {
+  toast('Starting service on ' + key + ' node...', 'info');
+  const res = await fetch(`/api/service/${key}/start`, {method:'POST'});
+  const data = await res.json();
+  toast(data.result, data.running ? 'ok' : 'err');
+  setTimeout(() => location.reload(), 2000);
+}
+
+async function svcStop(key) {
+  const res = await fetch(`/api/service/${key}/stop`, {method:'POST'});
+  const data = await res.json();
+  toast(data.result, 'err');
+  setTimeout(() => location.reload(), 1500);
+}
+
+
+setInterval(() => {
+  document.getElementById('clock').textContent = new Date().toLocaleString();
+}, 1000);
+
+// ── AUTO REFRESH STATUS every 20s ──
+setInterval(async () => {
+  try {
+    const res = await fetch('/api/status');
+    const data = await res.json();
+    data.nodes.forEach(n => {
+      const card = document.getElementById('card-' + n.key);
+      if (!card) return;
+      card.classList.toggle('online', n.online);
+      card.classList.toggle('offline', !n.online);
+      card.querySelector('.status-val').textContent = n.online ? 'Online' : 'Offline';
+      const neighborVal = card.querySelectorAll('.val')[1];
+      if (neighborVal) neighborVal.textContent = n.neighbors;
+      card.querySelectorAll('input[type=checkbox]').forEach(el => el.disabled = !n.online);
+    });
+  } catch(e) {}
+}, 20000);
+
+// ── AI SECURITY -- ZERO TRUST POLICY ENGINE ──
+
+const NODE_NAMES = {dc: 'Washington DC', seattle: 'Seattle', sf: 'San Francisco'};
+
+async function previewRuleset() {
+  const node = document.getElementById('rs-node').value;
+  const out = document.getElementById('ruleset-output');
+  out.style.display = 'block';
+  out.textContent = 'Generating preview...';
+  const res = await fetch(`/api/ai-security/generate-ruleset/${node}?preview=1`, {method: 'POST'});
+  const data = await res.json();
+  out.textContent = data.ruleset || data.error || 'No ruleset generated.';
+}
+
+async function applyRuleset() {
+  const node = document.getElementById('rs-node').value;
+  const out = document.getElementById('ruleset-output');
+  out.style.display = 'block';
+  out.textContent = `Applying zero-trust ruleset to ${node}...`;
+  const res = await fetch(`/api/ai-security/generate-ruleset/${node}`, {method: 'POST'});
+  const data = await res.json();
+  if (data.results) {
+    out.textContent = data.results.map(r => `[${r.ok ? 'OK' : 'FAILED'}] ${r.node}: ${r.message}`).join('\n');
+    toast(`Zero-trust ruleset applied to ${node}`, 'ok');
+  } else {
+    out.textContent = JSON.stringify(data, null, 2);
+    toast('Error applying ruleset', 'err');
+  }
+}
+
+async function simulateRequest() {
+  const domain = document.getElementById('sim-domain').value.trim();
+  const node = document.getElementById('sim-node').value;
+  const employee = document.getElementById('sim-employee').value.trim() || 'unknown';
+  const out = document.getElementById('sim-output');
+  if (!domain) return;
+  out.textContent = `Sending request: ${employee}@${node} -> ${domain} ...`;
+  const res = await fetch('/api/ai-security/simulate', {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({domain, node, employee})
+  });
+  const data = await res.json();
+  if (data.error) {
+    out.textContent = 'Error: ' + data.error;
+    return;
+  }
+  const r = data.result;
+  let text = `Decision: ${r.decision}\nReason: ${r.reason}`;
+  if (r.ml_available) {
+    text += `\n\nML Risk Model: ${(r.ml_risk_score*100).toFixed(1)}% suspicious (${r.ml_label}, severity: ${r.ml_severity})`;
+  }
+  if (data.notification) text += `\n\nAdmin notification: ${data.notification}`;
+  out.textContent = text;
+  toast(r.decision === 'ALLOW' ? `Allowed: ${domain}` : `Blocked & flagged: ${domain}`,
+        r.decision === 'ALLOW' ? 'ok' : 'err');
+  loadAlerts();
+}
+
+async function loadAlerts() {
+  const res = await fetch('/api/ai-security/alerts');
+  const alerts = await res.json();
+  const list = document.getElementById('alerts-list');
+  const pending = alerts.filter(a => a.status === 'pending');
+  document.getElementById('alert-count').textContent = pending.length + ' pending';
+
+  if (alerts.length === 0) {
+    list.innerHTML = '<div style="font-size:12px;color:#334155;padding:12px;">No requests logged yet. Try the simulator above.</div>';
+    return;
+  }
+
+  list.innerHTML = alerts.slice(0, 15).map(a => {
+    const riskTags = (a.risk_signals || []).map(r => `<span class="alert-risk">${r}</span>`).join('');
+    const statusClass = 'status-' + a.status;
+    const mlScore = a.ml_risk_score ?? 0;
+    const mlSev = a.ml_severity || 'info';
+    const mlPct = Math.round(mlScore * 100);
+    const mlBadge = `<span class="ml-score ml-${mlSev}">🤖 ML: ${mlPct}% ${a.ml_label || 'unknown'}</span>`;
+    const cardClass = mlSev === 'danger' ? 'ml-danger-card' : (mlSev === 'warn' ? 'ml-warn-card' : '');
+    const actions = a.status === 'pending'
+      ? `<button class="btn-sm btn-approve" onclick="approveAlert('${a.domain}')">✓ Approve</button>
+         <button class="btn-sm btn-deny" onclick="denyAlert('${a.domain}')">✕ Deny</button>`
+      : `<span class="status-tag ${statusClass}">${a.status}</span>`;
+    return `
+      <div class="alert-card ${a.status !== 'pending' ? 'resolved' : ''} ${cardClass}">
+        <div>
+          <div class="alert-domain">${a.domain}</div>
+          <div class="alert-meta">
+            Node: ${NODE_NAMES[a.node] || a.node} &nbsp;·&nbsp;
+            Requested ${a.request_count}x by: ${a.employees.join(', ')} &nbsp;·&nbsp;
+            Last: ${a.last_requested}
+          </div>
+          <div style="margin-top:6px;display:flex;gap:6px;flex-wrap:wrap;align-items:center;">
+            ${mlBadge}
+            ${riskTags}
+          </div>
+        </div>
+        <div class="alert-actions">${actions}</div>
+      </div>`;
+  }).join('');
+}
+
+async function approveAlert(domain) {
+  const res = await fetch('/api/ai-security/approve', {
+    method: 'POST', headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({domain})
+  });
+  const data = await res.json();
+  toast(data.result, 'ok');
+  loadAlerts();
+  loadAllowlist();
+}
+
+async function denyAlert(domain) {
+  const res = await fetch('/api/ai-security/deny', {
+    method: 'POST', headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({domain})
+  });
+  const data = await res.json();
+  toast(data.result, 'err');
+  loadAlerts();
+}
+
+async function loadAllowlist() {
+  const res = await fetch('/api/ai-security/allowlist');
+  const allowlist = await res.json();
+  const lines = [];
+  for (const [category, info] of Object.entries(allowlist)) {
+    lines.push(`# ${category}  (${info.risk})`);
+    lines.push(`  ${info.description}`);
+    info.domains.forEach(d => lines.push(`  - ${d}`));
+    lines.push('');
+  }
+  document.getElementById('allowlist-output').textContent = lines.join('\n');
+}
+
+// Initial load
+loadAlerts();
+loadAllowlist();
+
+// Refresh alerts every 15s
+setInterval(loadAlerts, 15000);
+</script>
+</body>
+</html>

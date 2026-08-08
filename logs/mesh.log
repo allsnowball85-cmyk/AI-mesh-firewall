@@ -1,0 +1,25 @@
+Warning - option -m was deprecated and will be removed in the future
+Warning - option -m was deprecated and will be removed in the future
+Warning - option -m was deprecated and will be removed in the future
+Warning - option -m was deprecated and will be removed in the future
+Warning - option -m was deprecated and will be removed in the future
+Warning - option -m was deprecated and will be removed in the future
+Mesh is up.
+Warning - option -m was deprecated and will be removed in the future
+[B.A.T.M.A.N. adv 2025.5, MainIF/MAC: veth-dc-sea/a6:d1:bd:67:89:06 (bat-dc/3a:68:97:a8:1d:87 BATMAN_IV)]
+IF             Neighbor              last-seen
+PING 10.0.0.2 (10.0.0.2) 56(84) bytes of data.
+
+--- 10.0.0.2 ping statistics ---
+1 packets transmitted, 0 received, 100% packet loss, time 0ms
+
+PING 10.0.0.3 (10.0.0.3) 56(84) bytes of data.
+
+--- 10.0.0.3 ping statistics ---
+1 packets transmitted, 0 received, 100% packet loss, time 0ms
+
+PING 10.0.0.3 (10.0.0.3) 56(84) bytes of data.
+
+--- 10.0.0.3 ping statistics ---
+1 packets transmitted, 0 received, 100% packet loss, time 0ms
+

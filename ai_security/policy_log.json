@@ -1,0 +1,47 @@
+[
+  {
+    "timestamp": "2026-06-15 11:35:36",
+    "domain": "takotejo52.ch",
+    "node": "dc",
+    "employee": "jim",
+    "decision": "BLOCK",
+    "category": null,
+    "risk_signals": [],
+    "reason": "Domain not in zero-trust allowlist. No business-need category matched -- default-deny applies.",
+    "ml_risk_score": 0.734,
+    "ml_label": "suspicious",
+    "ml_severity": "danger",
+    "ml_available": true
+  },
+  {
+    "timestamp": "2026-06-15 11:35:23",
+    "domain": "porn.com",
+    "node": "dc",
+    "employee": "jim",
+    "decision": "BLOCK",
+    "category": null,
+    "risk_signals": [],
+    "reason": "Domain not in zero-trust allowlist. No business-need category matched -- default-deny applies.",
+    "ml_risk_score": 0.058,
+    "ml_label": "benign",
+    "ml_severity": "info",
+    "ml_available": true
+  },
+  {
+    "timestamp": "2026-06-15 11:34:55",
+    "domain": "piratebay.com",
+    "node": "dc",
+    "employee": "jim",
+    "decision": "BLOCK",
+    "category": null,
+    "risk_signals": [
+      "file_sharing",
+      "shopping"
+    ],
+    "reason": "Domain not in zero-trust allowlist. Risk signals detected: file_sharing, shopping",
+    "ml_risk_score": 0.044,
+    "ml_label": "benign",
+    "ml_severity": "info",
+    "ml_available": true
+  }
+]
